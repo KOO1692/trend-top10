@@ -1,0 +1,13 @@
+{
+  "name": "trend-top10",
+  "version": "2.0.0",
+  "description": "Trend TOP 10 dashboard using Naver API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {}
+}

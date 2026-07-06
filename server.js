@@ -533,6 +533,11 @@ var server = http.createServer(function (req, res) {
   res.end("Not Found");
 });
 
-server.listen(3000, function () {
-  console.log("가짜 API 서버 실행 중: http://localhost:3000/api/trends");
+// Render 같은 호스팅 서비스는 서버가 어떤 포트를 쓸지 자기들이 정해서 환경변수
+// PORT로 알려준다. 그 값이 있으면 그대로 쓰고, 없으면(내 컴퓨터에서 그냥 실행할 때는)
+// 지금까지 쓰던 3000번을 그대로 쓴다.
+var PORT = process.env.PORT || 3000;
+
+server.listen(PORT, function () {
+  console.log("가짜 API 서버 실행 중: http://localhost:" + PORT + "/api/trends");
 });

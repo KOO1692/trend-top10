@@ -1150,6 +1150,91 @@ v1.7에서 안내 문구를 더 명확히 다듬으면서 그대로 유지했습
    배포한다면 HTTPS(자물쇠 표시)가 적용되는지 확인하는 것이 좋습니다(브라우저의
    클립보드 복사 기능 등도 HTTPS 환경에서 더 안정적으로 동작합니다).
 
+## Render 배포 전 최종 점검
+
+`server.js`(가짜 API 서버)를 [Render](https://render.com)에 배포하기 전에 마지막으로
+점검한 내용입니다. 실제 화면/기능은 바뀌지 않았고, 배포 환경에 맞춰 포트 처리 방식만
+고쳤습니다.
+
+### 점검 항목과 결과
+
+| 점검 항목 | 결과 |
+| --- | --- |
+| `server.js`가 포트를 `process.env.PORT \|\| 3000` 방식으로 읽는가? | ⚠️ → ✅ 수정함 (기존에는 `server.listen(3000)`으로 고정되어 있었습니다) |
+| `index.html`에 API 키/Secret이 있는가? | ✅ 없음 (다시 전체 검사, 이전과 동일하게 안전) |
+| `.env`가 `.gitignore`에 의해 Git에서 제외되는가? | ✅ 포함되어 있음 (`.env` 항목이 그대로 있고, `.claude/` 항목도 추가되어 있음을 확인) |
+
+### 실제로 바뀐 부분
+
+`server.js` 맨 아래의 서버 실행 부분을 아래처럼 고쳤습니다.
+
+```js
+// 이전 (포트가 3000으로 고정되어 있어 Render에서는 동작하지 않음)
+server.listen(3000, function () { ... });
+
+// 이후 (Render가 알려주는 PORT 환경변수가 있으면 그 값을, 없으면 3000을 사용)
+var PORT = process.env.PORT || 3000;
+server.listen(PORT, function () { ... });
+```
+
+Render 같은 호스팅 서비스는 서버가 실제로 어떤 포트 번호를 써야 하는지 자기들이
+결정한 뒤 `PORT`라는 환경변수로 알려줍니다. 포트 번호가 3000으로 고정되어 있으면
+Render 위에서 서버가 아예 뜨지 않을 수 있어서, 이번에 `process.env.PORT || 3000`
+방식으로 바꿨습니다. 내 컴퓨터에서 `node server.js`로 그냥 실행할 때는 `PORT`
+환경변수가 없으므로 지금까지와 똑같이 3000번 포트로 실행됩니다(직접 실행해서
+`http://localhost:3000`으로 확인했고, `PORT` 값을 넣었을 때도 그 포트로 정상 실행되는
+것까지 확인했습니다).
+
+### Render 배포 설정값 (초보자용)
+
+[render.com](https://render.com)에서 "New +" → "Web Service"로 새 서비스를 만들 때
+아래 값을 그대로 입력하면 됩니다.
+
+| 설정 항목 | 입력할 값 |
+| --- | --- |
+| Service Type | **Web Service** |
+| Language(Runtime) | **Node** |
+| Branch | **main** |
+| Build Command | `npm install` (또는 비워둬도 됩니다 — 이 프로젝트는 외부 패키지를 쓰지 않습니다) |
+| Start Command | `node server.js` |
+
+**환경변수(Environment Variables)** 설정 화면에 아래 4개 이름을 만들고, 각각 실제
+네이버 API에서 발급받은 값을 입력합니다.
+
+```
+NAVER_SHOPPING_CLIENT_ID
+NAVER_SHOPPING_CLIENT_SECRET
+NAVER_SEARCH_TREND_CLIENT_ID
+NAVER_SEARCH_TREND_CLIENT_SECRET
+```
+
+(용도별 키 대신 공용 키 한 쌍만 있다면 `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` 두
+개만 입력해도 됩니다. `.env.example`에 설명된 규칙과 동일합니다.)
+
+> ⚠️ **중요**: 실제 API 키/Secret 값은 **GitHub 저장소(코드)나 `.env` 파일에 커밋해서
+> 올리는 것이 아니라, 반드시 Render의 "Environment Variables" 설정 화면에 직접
+> 입력**해야 합니다. GitHub에는 `.env.example`처럼 값이 비어있는 안내 파일만 올라가야
+> 하고, `.gitignore`가 `.env` 파일 자체를 Git에서 제외해줍니다.
+
+### 브라우저/배포 후 직접 확인할 항목
+
+1. Render에 배포한 뒤, 로그(Logs) 탭에서 `가짜 API 서버 실행 중: http://localhost:...`
+   메시지가 정상적으로 뜨는지 확인해 주세요. (Render 안에서는 실제로 `PORT` 환경변수
+   값으로 뜹니다.)
+2. Render가 발급해주는 실제 주소(예: `https://내서비스이름.onrender.com`)로 접속해서
+   `/api/naver-ready`가 `{"shoppingInsightReady":true, "searchTrendReady":true}`처럼
+   두 값 모두 `true`로 나오는지 확인해 주세요. `false`가 보이면 Render의 환경변수
+   이름/값을 다시 확인해야 합니다.
+3. **`index.html`은 지금 `http://localhost:3000/api/trends`를 그대로 호출하도록
+   되어 있습니다.** 서버만 Render에 배포하고 `index.html`은 내 컴퓨터에서 그대로 열어
+   쓸 계획이라면, 로컬 서버(`node server.js`)를 계속 함께 켜둬야 화면이 정상 동작합니다.
+   만약 `index.html`이 Render에 배포한 서버를 바라보게 하려면 `index.html` 안의
+   `buildTrendsUrl` 함수에 있는 주소를 Render 주소로 바꿔야 하는데, 이번 점검에서는
+   범위 밖이라 손대지 않았습니다 — 필요하면 별도로 요청해 주세요.
+4. Render 무료 요금제는 일정 시간 요청이 없으면 서버가 "잠들었다가" 첫 요청에 다시
+   깨어나는 경우가 있어, 배포 직후 첫 조회는 평소보다 느릴 수 있습니다. 정상적인
+   동작이니 당황하지 않아도 됩니다.
+
 ## 파일 구조
 
 - `index.html`: 실제 서비스 화면 (HTML/CSS/JavaScript가 모두 이 파일 하나에 들어 있음)
@@ -1161,7 +1246,9 @@ v1.7에서 안내 문구를 더 명확히 다듬으면서 그대로 유지했습
 - `backups/`: 기능이 정상 동작하는 버전을 스냅샷으로 남겨두는 폴더
   - `index_v0.4.html`: 위 기능들이 완성된 시점의 백업본
   - `index_v1.1.html`: 조회 기준 표시 영역까지 포함된 v1.1 시점의 `index.html` 백업본
-  - `server_v1.1.js`: 같은 v1.1 시점의 `server.js` 백업본 (v1.2~v2.0에서도 변경이 없어 최신본)
+  - `server_v1.1.js`: 같은 v1.1 시점의 `server.js` 백업본 (v1.2~v2.0까지는 변경이 없었지만,
+    Render 배포 전 최종 점검에서 포트를 `process.env.PORT || 3000` 방식으로 고치면서
+    현재 `server.js`와는 달라졌습니다 — 필요하면 새 백업을 요청해 주세요)
   - `index_v1.2.html`: 사용성 개선(카드형 조회 기준, 모바일 대응 등)까지 포함된 v1.2
     시점의 `index.html` 백업본
   - `index_v1.3.html`: 결과 요약 복사 기능까지 포함된 v1.3 시점의 `index.html` 백업본
