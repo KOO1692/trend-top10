@@ -1,0 +1,18 @@
+# 네이버 API 키/Secret이 담긴 파일 (절대 커밋/푸시 금지)
+.env
+
+# 의존성 설치 폴더 (설치했을 경우를 대비 - 이 프로젝트는 아직 외부 패키지를 쓰지 않음)
+node_modules/
+
+# 로그 파일
+*.log
+npm-debug.log*
+
+# OS/에디터가 만드는 임시 파일
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+*~
+
+.claude/
