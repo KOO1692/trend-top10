@@ -1175,8 +1175,21 @@
     document.getElementById("keywordInputError").style.display = "none";
   }
 
+  // index.html을 여는 방식에 따라 API 서버 주소를 다르게 잡는다.
+  // - file://로 직접 열었을 때(더블클릭): 로컬 서버(node server.js)가 떠 있는
+  //   http://localhost:3000/api/trends로 요청한다.
+  // - http:// 또는 https://로 열었을 때(Render 등 서버가 이 파일도 함께 내려주는
+  //   경우): 같은 주소("/api/trends" 상대경로)로 요청하면 자동으로 같은 서버로
+  //   연결되므로, 도메인을 따로 적을 필요가 없다.
+  function getApiBaseUrl() {
+    if (window.location.protocol === "file:") {
+      return "http://localhost:3000/api/trends";
+    }
+    return "/api/trends";
+  }
+
   function buildTrendsUrl(keywords) {
-    var base = "http://localhost:3000/api/trends";
+    var base = getApiBaseUrl();
     if (keywords.length === 0) {
       return base;
     }

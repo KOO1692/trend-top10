@@ -341,6 +341,25 @@ var server = http.createServer(function (req, res) {
   var requestUrl = new URL(req.url, "http://localhost");
   var pathname = requestUrl.pathname;
 
+  if (pathname === "/") {
+    // Render 같은 곳에 배포하면 이 서버 주소로 직접 접속하는 사람이 생기므로,
+    // 메인 화면(index.html)을 그대로 읽어서 돌려준다. 로컬에서 index.html을
+    // 더블클릭해서 여는 방식(file://)에는 영향을 주지 않는다.
+    var indexPath = path.join(__dirname, "index.html");
+
+    fs.readFile(indexPath, "utf8", function (err, html) {
+      if (err) {
+        res.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
+        res.end("index.html을 읽는 중 오류가 발생했습니다.");
+        return;
+      }
+
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+      res.end(html);
+    });
+    return;
+  }
+
   if (pathname === "/api/trends") {
     // 화면(index.html)이 실제로 쓰는 주소입니다. keywords 쿼리값(없으면 기본 키워드)으로
     // 네이버 API를 먼저 호출해보고, 성공하면 그 결과를 화면 데이터 모양으로 바꿔서

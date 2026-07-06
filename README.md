@@ -1225,15 +1225,83 @@ NAVER_SEARCH_TREND_CLIENT_SECRET
    `/api/naver-ready`가 `{"shoppingInsightReady":true, "searchTrendReady":true}`처럼
    두 값 모두 `true`로 나오는지 확인해 주세요. `false`가 보이면 Render의 환경변수
    이름/값을 다시 확인해야 합니다.
-3. **`index.html`은 지금 `http://localhost:3000/api/trends`를 그대로 호출하도록
-   되어 있습니다.** 서버만 Render에 배포하고 `index.html`은 내 컴퓨터에서 그대로 열어
-   쓸 계획이라면, 로컬 서버(`node server.js`)를 계속 함께 켜둬야 화면이 정상 동작합니다.
-   만약 `index.html`이 Render에 배포한 서버를 바라보게 하려면 `index.html` 안의
-   `buildTrendsUrl` 함수에 있는 주소를 Render 주소로 바꿔야 하는데, 이번 점검에서는
-   범위 밖이라 손대지 않았습니다 — 필요하면 별도로 요청해 주세요.
+3. ~~`index.html`은 지금 `http://localhost:3000/api/trends`를 그대로 호출하도록 되어
+   있습니다...~~ → **v2.1에서 해결되었습니다.** 이제 `index.html`을 여는 방식(로컬
+   file:// / Render의 https://)에 따라 API 주소를 자동으로 알맞게 골라 씁니다. 자세한
+   내용은 아래 "v2.1 — Render 배포 화면 표시 문제 수정" 절을 참고하세요.
 4. Render 무료 요금제는 일정 시간 요청이 없으면 서버가 "잠들었다가" 첫 요청에 다시
    깨어나는 경우가 있어, 배포 직후 첫 조회는 평소보다 느릴 수 있습니다. 정상적인
    동작이니 당황하지 않아도 됩니다.
+
+## v2.1 — Render 배포 화면 표시 문제 수정
+
+Render에 배포한 주소(`https://trend-top10.onrender.com`)로 접속했을 때 "Not Found"가
+뜨는 문제를 고쳤습니다. 원인은 `server.js`가 `/api/...` 같은 API 주소만 처리할 뿐,
+메인 화면 주소(`/`)로 접속했을 때 `index.html`을 보여주는 코드가 없었기 때문입니다.
+API 키/Secret은 이번에도 `index.html`에 넣지 않았고, `.env` 파일도 건드리지
+않았습니다.
+
+### 실제로 바뀐 부분
+
+**1) `server.js`: `GET /` 요청에 `index.html`을 응답하도록 추가**
+
+```js
+if (pathname === "/") {
+  var indexPath = path.join(__dirname, "index.html");
+  fs.readFile(indexPath, "utf8", function (err, html) {
+    // 성공하면 index.html 내용을 text/html로 그대로 돌려줌
+  });
+  return;
+}
+```
+
+이제 누군가 서버 주소(`/`)로 접속하면, 서버가 같은 폴더에 있는 `index.html` 파일을
+읽어서 그대로 화면에 보여줍니다. 기존 API 주소 4개(`/api/trends`, `/api/naver-ready`,
+`/api/search-trend-test`, `/api/shopping-insight-test`)는 이전과 완전히 동일하게
+동작합니다.
+
+**2) `index.html`: API 서버 주소를 여는 방식에 맞게 자동으로 선택**
+
+이전에는 `http://localhost:3000/api/trends` 주소가 코드에 그대로 고정되어 있어서,
+Render에 배포된 화면에서는 항상 내 컴퓨터의 localhost를 찾다가 실패했습니다. 이제는
+아래처럼 지금 이 페이지가 어떻게 열렸는지 확인해서 주소를 자동으로 고릅니다.
+
+```js
+function getApiBaseUrl() {
+  if (window.location.protocol === "file:") {
+    // 컴퓨터에서 index.html 파일을 더블클릭해서 열었을 때
+    return "http://localhost:3000/api/trends";
+  }
+  // Render처럼 웹 서버가 index.html까지 함께 내려주는 경우
+  return "/api/trends";
+}
+```
+
+- **로컬에서 `index.html`을 더블클릭해서 열 때**(주소창에 `file://...`로 시작):
+  지금까지와 똑같이 `http://localhost:3000/api/trends`로 요청합니다. `node server.js`를
+  먼저 실행해둬야 하는 것도 그대로입니다.
+- **Render 주소(`https://...`)로 접속했을 때**: `/api/trends`라는 "상대 주소"로
+  요청합니다. 상대 주소는 지금 보고 있는 페이지와 같은 서버로 자동 연결되므로,
+  Render 주소를 코드에 직접 적을 필요가 없습니다.
+
+### 브라우저에서 확인할 항목 (초보자용)
+
+배포 후 아래 3개 주소를 각각 열어서 확인해 주세요.
+
+1. **`https://trend-top10.onrender.com`**
+   "Not Found" 대신 "트렌드 TOP 10" 화면(제목, 키워드 입력 영역 등)이 정상적으로
+   보이는지 확인합니다. 페이지가 열리자마자 자동으로 트렌드 조회가 실행되어 표/차트에
+   데이터가 채워지는지도 함께 확인합니다.
+2. **`https://trend-top10.onrender.com/api/naver-ready`**
+   `{"shoppingInsightReady":true,"searchTrendReady":true}`처럼 JSON 응답이 그대로
+   보이는지 확인합니다(이전과 동일하게 동작해야 합니다).
+3. **`https://trend-top10.onrender.com/api/trends`**
+   `searchData`, `shoppingProductData` 등이 담긴 JSON 응답이 보이는지 확인합니다
+   (이전과 동일하게 동작해야 합니다).
+
+로컬 확인도 잊지 마세요: `node server.js`를 실행한 뒤 `index.html`을 더블클릭해서
+열었을 때도 이전과 동일하게 잘 동작해야 합니다(이번 변경으로 로컬 동작 방식은
+바뀌지 않았습니다).
 
 ## 파일 구조
 
