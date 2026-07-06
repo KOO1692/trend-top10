@@ -1303,6 +1303,16 @@ function getApiBaseUrl() {
 열었을 때도 이전과 동일하게 잘 동작해야 합니다(이번 변경으로 로컬 동작 방식은
 바뀌지 않았습니다).
 
+### v2.1 백업 생성
+
+Render 배포에서 정상 작동하는 v2.1 시점을 스냅샷으로 남겨두기 위해
+`backups/index_v2.1.html`과 `backups/server_v2.1.js`를 새로 만들었습니다. 두 파일 모두
+지금 `index.html` / `server.js`와 내용이 동일한 "그대로 복사본"이며, 나중에 기능을
+수정하다가 문제가 생기면 이 시점(Render에서 실제로 정상 동작을 확인한 시점)으로
+되돌아올 수 있습니다. v2.0~v2.1 사이에 `server.js`(포트 처리, `/` 라우트 추가)와
+`index.html`(API 주소 자동 분기)이 모두 바뀌었기 때문에, 이번에는 두 파일 모두
+새로 백업했습니다.
+
 ## 파일 구조
 
 - `index.html`: 실제 서비스 화면 (HTML/CSS/JavaScript가 모두 이 파일 하나에 들어 있음)
@@ -1315,8 +1325,8 @@ function getApiBaseUrl() {
   - `index_v0.4.html`: 위 기능들이 완성된 시점의 백업본
   - `index_v1.1.html`: 조회 기준 표시 영역까지 포함된 v1.1 시점의 `index.html` 백업본
   - `server_v1.1.js`: 같은 v1.1 시점의 `server.js` 백업본 (v1.2~v2.0까지는 변경이 없었지만,
-    Render 배포 전 최종 점검에서 포트를 `process.env.PORT || 3000` 방식으로 고치면서
-    현재 `server.js`와는 달라졌습니다 — 필요하면 새 백업을 요청해 주세요)
+    이후 Render 배포 대응 과정에서 `server.js`가 바뀌면서 지금은 옛날 버전입니다.
+    최신 `server.js` 백업은 아래 `server_v2.1.js`입니다)
   - `index_v1.2.html`: 사용성 개선(카드형 조회 기준, 모바일 대응 등)까지 포함된 v1.2
     시점의 `index.html` 백업본
   - `index_v1.3.html`: 결과 요약 복사 기능까지 포함된 v1.3 시점의 `index.html` 백업본
@@ -1326,4 +1336,8 @@ function getApiBaseUrl() {
   - `index_v1.7.html`: 조회 중/오류 UX 개선까지 포함된 v1.7 시점의 `index.html` 백업본
   - `index_v1.8.html`: 간단 막대 차트 기능까지 포함된 v1.8 시점의 `index.html` 백업본
   - `index_v1.9.html`: 리포트 화면 구조 정리까지 포함된 v1.9 시점의 `index.html` 백업본
+  - `index_v2.1.html`: Render 배포 화면 표시 문제 수정까지 포함된 v2.1 시점의 `index.html`
+    백업본 (Render에서 실제로 정상 동작을 확인한 시점)
+  - `server_v2.1.js`: 같은 v2.1 시점의 `server.js` 백업본 (`GET /`에서 `index.html`을
+    응답하는 코드와 `process.env.PORT` 포트 처리가 포함된 최신본)
 - `CLAUDE.md`: Claude Code가 이 프로젝트에서 작업할 때 참고하는 안내 문서
