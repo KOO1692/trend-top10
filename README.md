@@ -16,6 +16,20 @@
 > `.env` 파일에 커밋해서 올리면 안 됩니다. 반드시 Render의 "Environment Variables"
 > 설정 화면에만 입력하세요. 자세한 방법은 아래 "Render 배포 설정값" 절을 참고하세요.
 
+### 운영 점검 주소
+
+배포된 사이트가 잘 동작하는지 확인하고 싶을 때는 아래 4개 주소를 순서대로 열어보세요.
+
+| 확인 목적 | 주소 |
+| --- | --- |
+| 1. 메인 사이트 | https://trend-top10.onrender.com/ |
+| 2. 서버 상태 확인 | https://trend-top10.onrender.com/api/health |
+| 3. 네이버 API 준비 확인 | https://trend-top10.onrender.com/api/naver-ready |
+| 4. 트렌드 데이터 확인 | https://trend-top10.onrender.com/api/trends |
+
+`/api/health`는 네이버 API를 호출하지 않고 **서버 프로세스 자체가 살아있는지만** 빠르게
+확인하는 용도입니다. 자세한 내용은 아래 "v2.4" 절을 참고하세요.
+
 ## 이 프로젝트는 무엇인가요?
 
 "트렌드 TOP 10"은 **쇼핑 검색 상품 TOP 10**과 **검색 트렌드 TOP 10**을 보여주는
@@ -1472,6 +1486,73 @@ Render 배포에서 정상 작동하는 v2.1 시점을 스냅샷으로 남겨두
 `server.js`는 v2.3에서 수정하지 않았으므로(변경 없음), 이번에도 새 백업을 만들지
 않았습니다. `server.js`의 최신 백업은 여전히 `backups/server_v2.1.js`입니다.
 
+## v2.4 — 운영 점검용 health API 추가
+
+이번 버전은 화면 기능이 아니라, **배포된 서버가 정상적으로 떠 있는지 빠르게 확인할 수
+있는 운영 점검용 주소**를 추가하는 것이 목표입니다. `index.html`은 이번 버전에서 전혀
+수정하지 않았고(API 키/Secret도 당연히 추가하지 않았습니다), `.env` 파일도 건드리지
+않았습니다.
+
+### `server.js`에 추가된 것
+
+**`GET /api/health`** 라우트를 새로 추가했습니다. 네이버 API를 전혀 호출하지 않고,
+이 서버 프로세스가 요청을 받아 응답할 수 있는 상태인지만 바로 알려줍니다.
+
+```json
+{
+  "ok": true,
+  "service": "trend-top10",
+  "status": "running",
+  "timestamp": "2026-07-09T08:09:44.751Z"
+}
+```
+
+- `timestamp`는 요청을 처리한 순간의 서버 시각(ISO 8601 형식)입니다.
+- 이 응답에는 API 키/Secret이나 다른 환경변수 값이 **절대 포함되지 않습니다.**
+  (`NAVER_...` 관련 값을 하나도 읽지 않고, 고정된 문구와 현재 시각만 돌려줍니다.)
+- 네이버 서버에 요청을 보내지 않으므로, 네이버 API 키가 아예 설정되어 있지 않거나
+  네이버 서버가 느려도 `/api/health`는 항상 빠르게 응답합니다.
+
+### 기존 라우트는 모두 그대로 유지
+
+`/`(메인 화면), `/api/trends`, `/api/naver-ready`, `/api/search-trend-test`,
+`/api/shopping-insight-test` 5개 라우트는 이번 버전에서 전혀 수정하지 않았습니다.
+
+### 기존 기능은 모두 그대로 유지
+
+키워드 조회, 기본 키워드 되돌리기, 최근 키워드 기억, 카테고리 필터, 오늘의 요약, 조회
+기준 카드, 마지막 조회 시각, 결과 요약 문장, 결과 요약 복사, 표, 차트, fallback, 조회
+중/오류 UX, 사용 안내 섹션은 이번 버전에서 전혀 바뀌지 않았습니다.
+
+### 브라우저에서 확인할 항목 (초보자용)
+
+1. 터미널에서 서버를 실행합니다(로컬 확인 시).
+   ```
+   node server.js
+   ```
+2. 브라우저 주소창에 `http://localhost:3000/api/health`(로컬) 또는
+   `https://trend-top10.onrender.com/api/health`(배포 사이트)를 입력합니다.
+3. 아래처럼 `ok`, `service`, `status`, `timestamp` 4개 값이 담긴 JSON이 보이는지
+   확인합니다.
+   ```json
+   { "ok": true, "service": "trend-top10", "status": "running", "timestamp": "..." }
+   ```
+4. 응답 안에 `NAVER_`로 시작하는 값이나 Client ID/Secret처럼 보이는 값이 전혀 없는지
+   확인합니다.
+5. 새로고침할 때마다 `timestamp` 값이 매번 현재 시각으로 바뀌는지 확인합니다.
+6. 위 "운영 점검 주소" 표에 있는 나머지 3개 주소(`/`, `/api/naver-ready`,
+   `/api/trends`)도 이전과 동일하게 정상 동작하는지 함께 확인합니다.
+7. 화면(`index.html`)을 열어서 키워드 조회, 카테고리 필터, 결과 요약 복사, 차트 등
+   기존 기능이 이전과 동일하게 잘 동작하는지도 확인합니다.
+
+### v2.4 백업 생성
+
+health API 추가까지 정상 동작하는 v2.4 시점을 스냅샷으로 남겨두기 위해
+`backups/server_v2.4.js`를 새로 만들었습니다. 지금 `server.js`와 내용이 동일한 "그대로
+복사본"이며, 나중에 기능을 수정하다가 문제가 생기면 이 시점으로 되돌아올 수 있습니다.
+`index.html`은 v2.4에서 수정하지 않았으므로(변경 없음), 이번에는 새 백업을 만들지
+않았습니다. `index.html`의 최신 백업은 여전히 `backups/index_v2.3.html`입니다.
+
 ## 파일 구조
 
 - `index.html`: 실제 서비스 화면 (HTML/CSS/JavaScript가 모두 이 파일 하나에 들어 있음)
@@ -1498,9 +1579,10 @@ Render 배포에서 정상 작동하는 v2.1 시점을 스냅샷으로 남겨두
   - `index_v2.1.html`: Render 배포 화면 표시 문제 수정까지 포함된 v2.1 시점의 `index.html`
     백업본 (Render에서 실제로 정상 동작을 확인한 시점)
   - `server_v2.1.js`: 같은 v2.1 시점의 `server.js` 백업본 (`GET /`에서 `index.html`을
-    응답하는 코드와 `process.env.PORT` 포트 처리가 포함된 최신본, 지금도 최신 `server.js`
-    백업본)
+    응답하는 코드와 `process.env.PORT` 포트 처리가 포함된 최신본)
   - `index_v2.2.html`: 사용 안내 섹션까지 포함된 v2.2 시점의 `index.html` 백업본
   - `index_v2.3.html`: 공유용 제목/설명(meta description, Open Graph 태그) 개선까지
-    포함된 v2.3 시점의 `index.html` 백업본
+    포함된 v2.3 시점의 `index.html` 백업본 (지금도 최신 `index.html` 백업본)
+  - `server_v2.4.js`: `GET /api/health` 운영 점검 라우트 추가까지 포함된 v2.4 시점의
+    `server.js` 백업본 (지금도 최신 `server.js` 백업본)
 - `CLAUDE.md`: Claude Code가 이 프로젝트에서 작업할 때 참고하는 안내 문서
