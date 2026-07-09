@@ -753,5 +753,5 @@ var server = http.createServer(function (req, res) {
 var PORT = process.env.PORT || 3000;
 
 server.listen(PORT, function () {
-  console.log("가짜 API 서버 실행 중: http://localhost:" + PORT + "/api/trends");
+  console.log("네이버 쇼핑 검색 TOP10 서버 실행 중: http://localhost:" + PORT + "/api/naver-shopping-search");
 });
