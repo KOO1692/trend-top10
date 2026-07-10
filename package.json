@@ -1,7 +1,7 @@
 {
   "name": "trend-top10",
-  "version": "2.0.0",
-  "description": "Trend TOP 10 dashboard using Naver API",
+  "version": "3.0.0",
+  "description": "Personal reference dashboard for Naver market status and shopping search TOP10 data",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
