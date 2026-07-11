@@ -1,6 +1,6 @@
 {
   "name": "trend-top10",
-  "version": "3.5.0",
+  "version": "3.6.0",
   "description": "Personal reference dashboard for Naver market status and shopping search TOP10 data",
   "main": "server.js",
   "scripts": {
