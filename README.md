@@ -219,7 +219,8 @@ API 호출이 실패하면(키 미설정, 네이버 서버 오류, 응답에 쓸
   막는 설정 파일
 - `package.json`: 프로젝트 메타 정보와 실행 스크립트(`npm start` → `node server.js`)
 - `backups/`: 주요 버전 시점의 `index.html` / `server.js` 스냅샷을 남겨두는 폴더
-  (최신 `index.html` 백업본: `index_v3.2.html`, 최신 `server.js` 백업본: `server_v3.0.js`)
+  (최신 `index.html` 백업본: `index_v3.2_emoji_layout.html`, 최신 `server.js`
+  백업본: `server_v3.0.js`)
 - `CLAUDE.md`: Claude Code가 이 프로젝트에서 작업할 때 참고하는 안내 문서
 
 ## 버전 히스토리 (요약)
@@ -311,16 +312,21 @@ API 호출이 실패하면(키 미설정, 네이버 서버 오류, 응답에 쓸
 - **헤더 캐릭터 이모티콘**: `assets/emoticons.png`(2열 x 5행, 캐릭터 10종 스프라이트
   이미지)에서 캐릭터별로 잘라 쓰는 `emoji-happy` / `emoji-drink` / `emoji-thumb` /
   `emoji-hello` / `emoji-shy` / `emoji-heart` / `emoji-think` / `emoji-sleep` /
-  `emoji-cry-laugh` / `emoji-tongue` 클래스를 만들고, 그중 6종(happy·thumb·hello·
-  heart·think·sleep)을 제목 좌우에, 2종(drink·shy)을 아주 작은 배경 장식으로 헤더에
-  배치했습니다. 흰 테두리·부드러운 그림자·살짝 기울어진 회전으로 "떠 있는" 느낌을
-  줬습니다.
+  `emoji-cry-laugh` / `emoji-tongue` 클래스를 만들어 헤더에 배치했습니다. 흰
+  테두리·부드러운 그림자·살짝 기울어진 회전으로 "떠 있는" 느낌을 줬습니다.
+- **(개선) 헤더 이모티콘 크기와 배치 조정**: 처음 적용했을 때 캐릭터가 너무
+  작게 보인다는 피드백을 반영해서, PC 화면에서는 제목 좌우에 5개씩 총
+  10개(왼쪽 happy·thumb·hello·drink·cry-laugh / 오른쪽 heart·think·sleep·shy·
+  tongue)가 모두 보이도록 늘리고, 크기도 확실히 크게(66~78px, 보조 이모티콘도
+  46px 이상) 키웠습니다. 커진 이모티콘이 잘리지 않도록 헤더 위아래 여백도
+  함께 늘렸습니다.
 - **제목은 항상 최상단 레이어**: 제목·부제·기준일을 `.header-content`로 묶어
   이모티콘 레이어(`.header-decor`)보다 위(z-index)에 그리므로, 이모티콘이 절대
   제목 글자를 가리지 않습니다.
-- **반응형 개수 조절**: 데스크톱은 8개, 태블릿(900px 이하)은 4개(happy·thumb·
-  heart·think), 모바일(700px 이하)은 3개(happy·heart·thumb)만 작게 남기고 나머지는
-  `display: none` 처리했습니다. 모바일에서는 제목·부제 영역과 겹치지 않도록 헤더의
+- **반응형 개수 조절**: PC(1100px 초과)는 10개 모두, 태블릿(1100px 이하)은
+  6개(happy·thumb·hello·heart·think·sleep)만 적당한 크기로, 모바일(700px 이하)은
+  3개(happy·heart·thumb)만 작게 남기고 나머지는 `display: none` 처리했습니다.
+  모바일에서는 헤더 여백도 다시 줄여서 제목·부제 영역과 겹치지 않도록 헤더의
   위/아래 여백(패딩) 안에만 배치했습니다.
 - **접근성/안정성**: 이모티콘은 장식 요소이므로 `aria-hidden="true"`로 스크린리더가
   건너뛰게 했고, `pointer-events: none`으로 클릭에 영향을 주지 않게 했습니다.
@@ -334,7 +340,8 @@ API 호출이 실패하면(키 미설정, 네이버 서버 오류, 응답에 쓸
   base64 데이터 URI로 인라인했습니다. 원본 이미지 파일 자체는 `assets/emoticons.png`
   하나만 유지하며(추가로 잘라낸 개별 이미지 파일은 만들지 않음), 이 파일이 곧
   캐릭터 10종의 유일한 원본입니다.
-- **백업**: `backups/index_v3.2.html` 생성.
+- **백업**: `backups/index_v3.2.html` 생성. 크기/배치 개선 이후 시점은
+  `backups/index_v3.2_emoji_layout.html`로 별도 백업.
 
 외부 라이브러리/CDN은 추가하지 않았고, API 키/Secret은 이번에도 `index.html`에
 들어가지 않았습니다.
